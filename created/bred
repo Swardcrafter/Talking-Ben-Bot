@@ -1,6 +1,0 @@
-async def test(interaction, bot, breadDB):
-    guild = bot.get_guild(1080682750849319012)
-    channel = bot.get_channel(1118588236609093742)
-    channel2 = bot.get_channel(1118233427137806458)
-    with open("bred.gif", 'rb') as file:
-        await channel.send(file=discord.File(file))
