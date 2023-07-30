@@ -34,7 +34,7 @@ async def on_guild_join(guild):
             "whitelisted": []
         }
 
-
+    Save(db)
 '''
 
 Example Command:
