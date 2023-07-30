@@ -37,6 +37,13 @@ async def on_guild_join(guild):
     Save(db)
 
 @bot.event
+async def on_guild_channel_update(before, channel):
+    if before.name != channel.name:
+        db[channel.guild.id]["channels"][channel.id]["name"] = channel.name
+
+    Save(db)
+
+@bot.event
 async def on_guild_channel_create(channel):
     db[channel.guild.id]["channels"][channel.id] = {
         "name": channel.name,
