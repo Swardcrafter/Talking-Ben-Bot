@@ -40,19 +40,12 @@ async def setInfo(interaction: discord.Interaction, id: int, message: str):
     else:
         await interaction.response.send_message(
             f"You don't have the perms to do this.", ephemeral=True)
+
+
+
 '''
 
 
-
-
-@bot.tree.command(name="setprefix")
-@app_commands.describe(prefix="New Prefix.")
-async def prefix(interaction: discord.Interaction, prefix: str):
-    global db
-    if (interaction.user.guild_permissions.administrator):
-        bot.command_prefix = prefix
-        await interaction.response.send_message(
-            f"Set Prefix to: {bot.command_prefix}")
 
 
 
