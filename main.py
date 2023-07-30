@@ -18,6 +18,23 @@ async def on_ready():
         print(e)
 
 
+@bot.event
+async def on_guild_join(guild):
+    db[guild.id] = {
+        "name": guild.name,
+        "id": guild.id,
+        "channels": {
+
+        }
+    }
+    for channel in guild.channels:
+        db[guild.id]["channels"][channel.id] = {
+            "name": channel.name,
+            "id": channel.id,
+            "whitelisted": []
+        }
+
+
 '''
 
 Example Command:
