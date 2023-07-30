@@ -35,6 +35,25 @@ async def on_guild_join(guild):
         }
 
     Save(db)
+
+@bot.event
+async def on_guild_channel_create(channel):
+    db[channel.guild.id]["channels"][channel.id] = {
+        "name": channel.name,
+        "id": channel.id,
+        "whitelisted": []
+    }
+
+    Save(db)
+
+
+@bot.event
+async def on_guild_channel_delete(channel):
+    del db[channel.guild.id]["channels"][channel.id]
+
+    Save(db)
+
+
 '''
 
 Example Command:
