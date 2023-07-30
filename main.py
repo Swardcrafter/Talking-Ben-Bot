@@ -44,6 +44,12 @@ async def on_guild_channel_update(before, channel):
     Save(db)
 
 @bot.event
+async def on_guild_remove(guild):
+    del db[guild.id]
+
+    Save(db)
+
+@bot.event
 async def on_guild_channel_create(channel):
     db[channel.guild.id]["channels"][channel.id] = {
         "name": channel.name,
