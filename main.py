@@ -69,6 +69,41 @@ async def on_guild_channel_delete(channel):
     Save(db)
 
 
+
+### Commands:
+
+
+@bot.tree.command(name="whiteliston")
+@app_commands.describe()
+async def whiteliston(interaction: discord.Interaction,):
+    print(f"Whitelist on triggered with this interaction: \n{interaction}")
+    await interaction.response.send_message(f"Whitelist on triggered with this interaction: \n{interaction}", ephemeral=True)
+
+@bot.tree.command(name="whitelistoff")
+@app_commands.describe()
+async def whitelistoff(interaction: discord.Interaction,):
+    print(f"Whitelist off triggered with this interaction: \n{interaction}")
+    await interaction.response.send_message(f"Whitelist off triggered with this interaction: \n{interaction}", ephemeral=True)
+
+@bot.tree.command(name="addwhitelist")
+@app_commands.describe(user="The user you want to add to the whitelist")
+async def addwhitelist(interaction: discord.Interaction, user: discord.User()):
+    print(f"Whitelist add triggered with this interaction: \n{interaction}\n And this user:\n{user}")
+    await interaction.response.send_message(f"Whitelist add triggered with this interaction: \n{interaction}\n And this user:\n{user}", ephemeral=True)
+
+@bot.tree.command(name="removewhitelist")
+@app_commands.describe(user="The user you want to remove from the whitelist")
+async def removewhitelist(interaction: discord.Interaction, user: discord.User()):
+    print(f"Whitelist remove triggered with this interaction: \n{interaction}\n And this user:\n{user}")
+    await interaction.response.send_message(f"Whitelist remove triggered with this interaction: \n{interaction}\n And this user:\n{user}", ephemeral=True)
+
+@bot.tree.command(name="viewwhitelist")
+@app_commands.describe()
+async def viewwhitelist(interaction: discord.Interaction):
+    print(f"Viewwhitelist triggered with this interaction: \n{interaction}")
+    await interaction.response.send_message(f"Viewwhitelist triggered with this interaction: \n{interaction}", ephemeral=True)
+
+
 '''
 
 Example Command:
