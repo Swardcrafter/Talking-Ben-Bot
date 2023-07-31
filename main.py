@@ -31,7 +31,8 @@ async def on_guild_join(guild):
         db[guild.id]["channels"][channel.id] = {
             "name": channel.name,
             "id": channel.id,
-            "whitelisted": []
+            "whitelisted": [],
+            "whiteliston": False
         }
 
     Save(db)
@@ -54,7 +55,8 @@ async def on_guild_channel_create(channel):
     db[channel.guild.id]["channels"][channel.id] = {
         "name": channel.name,
         "id": channel.id,
-        "whitelisted": []
+        "whitelisted": [],
+        "whiteliston": False
     }
 
     Save(db)
