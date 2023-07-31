@@ -87,13 +87,13 @@ async def whitelistoff(interaction: discord.Interaction,):
 
 @bot.tree.command(name="addwhitelist")
 @app_commands.describe(user="The user you want to add to the whitelist")
-async def addwhitelist(interaction: discord.Interaction, user: discord.User()):
+async def addwhitelist(interaction: discord.Interaction, user: discord.Member):
     print(f"Whitelist add triggered with this interaction: \n{interaction}\n And this user:\n{user}")
     await interaction.response.send_message(f"Whitelist add triggered with this interaction: \n{interaction}\n And this user:\n{user}", ephemeral=True)
 
 @bot.tree.command(name="removewhitelist")
 @app_commands.describe(user="The user you want to remove from the whitelist")
-async def removewhitelist(interaction: discord.Interaction, user: discord.User()):
+async def removewhitelist(interaction: discord.Interaction, user: discord.Member):
     print(f"Whitelist remove triggered with this interaction: \n{interaction}\n And this user:\n{user}")
     await interaction.response.send_message(f"Whitelist remove triggered with this interaction: \n{interaction}\n And this user:\n{user}", ephemeral=True)
 
