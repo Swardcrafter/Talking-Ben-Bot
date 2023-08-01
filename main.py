@@ -95,13 +95,13 @@ async def addwhitelist(interaction: discord.Interaction, user: discord.Member):
 	
 
 
-    if(db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {} or db[interaction.guild.id]["channels"][channelId]["whiteliston"] == False):
+    if(db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
         if(interaction.user.guild_permissions.administrator):
             db[interaction.guild.id]["channels"][channelId]["whitelisted"][user.id] = {
                 "name": user.name,
                 "id": user.id
             }
-            embed=discord.Embed(title=f"Added {user.name} to whitelist", color=0x007063)
+            embed=discord.Embed(title=f"NO USERS | Added {user.name} to whitelist", color=0x007063)
             embed.set_author(name="Whitelist")
             embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -116,7 +116,7 @@ async def addwhitelist(interaction: discord.Interaction, user: discord.Member):
                 "name": user.name,
                 "id": user.id
             }
-            embed=discord.Embed(title=f"Added {user.name} to whitelist", color=0x007063)
+            embed=discord.Embed(title=f"USERS EXIST | Added {user.name} to whitelist", color=0x007063)
             embed.set_author(name="Whitelist")
             embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -135,10 +135,10 @@ async def removewhitelist(interaction: discord.Interaction, user: discord.Member
     channel = interaction.channel
     channelId = channel.id
 
-    if(db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {} or db[interaction.guild.id]["channels"][channelId]["whiteliston"] == False):
+    if(db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
         if(interaction.user.guild_permissions.administrator):
             if(user.id in db[interaction.guild.id]["channels"][channelId]["whitelisted"]):
-                db[interaction.guild.id]["channels"][channelId]["whitelisted"].remove(user.id)
+                del db[interaction.guild.id]["channels"][channelId]["whitelisted"][user.id]
                 embed=discord.Embed(title=f"Removed {user.name} from whitelist", color=0x007063)
                 embed.set_author(name="Whitelist")
                 embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
@@ -156,7 +156,7 @@ async def removewhitelist(interaction: discord.Interaction, user: discord.Member
     else:
         if(interaction.user.id in db[interaction.guild.id]["channels"][channelId]["whitelisted"]):
             if(user.id in db[interaction.guild.id]["channels"][channelId]["whitelisted"]):
-                db[interaction.guild.id]["channels"][channelId]["whitelisted"].remove(user.id)
+                del db[interaction.guild.id]["channels"][channelId]["whitelisted"][user.id]
                 embed=discord.Embed(title=f"Removed {user.name} from whitelist", color=0x007063)
                 embed.set_author(name="Whitelist")
                 embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
