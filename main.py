@@ -78,7 +78,8 @@ async def on_message(message):
     channelId = channel.id
     
     if(db[message.guild.id]["channels"][channelId]["whiteliston"] == True):
-        if(message.author.id in db[message.guild.id]["channels"][channelId]["whitelisted"]):
+        print(message.author.id in db[message.guild.id]["channels"][channelId]["whitelisted"])
+        if(message.author.id not in db[message.guild.id]["channels"][channelId]["whitelisted"]):
             await message.delete()
             embed=discord.Embed(title=f"You are not whitelisted in this channel.", color=0x007063)
             embed.set_author(name="Whitelist")
