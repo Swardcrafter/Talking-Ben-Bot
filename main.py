@@ -245,9 +245,9 @@ async def removewhitelist(interaction: discord.Interaction, user: discord.Member
 
     Save(db)
 
-@bot.tree.command(name="viewwhitelist")
+@bot.tree.command(name="viewlists")
 @app_commands.describe()
-async def viewwhitelist(interaction: discord.Interaction):
+async def viewlists(interaction: discord.Interaction):
     channel = interaction.channel
     channelId = channel.id
     whitelisted = db[interaction.guild.id]["channels"][channelId]["whitelisted"]
@@ -256,6 +256,16 @@ async def viewwhitelist(interaction: discord.Interaction):
         message += "    - " + whitelisted[userId]["name"] + "\n"
     embed=discord.Embed(title=f"Whitelisted Users in {interaction.channel.name}:", description=message, color=0x007063)
     embed.set_author(name="Whitelist")
+    embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+    channel = interaction.channel
+    channelId = channel.id
+    blacklisted = db[interaction.guild.id]["channels"][channelId]["blacklist"]
+    message = ""
+    for userId in blacklisted:
+        message += "    - " + blacklisted[userId]["name"] + "\n"
+    embed=discord.Embed(title=f"Blacklisted Users in {interaction.channel.name}:", description=message, color=0x007063)
+    embed.set_author(name="Blacklist")
     embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -348,19 +358,6 @@ async def removeblacklist(interaction: discord.Interaction, user: discord.Member
 
     Save(db)
 
-@bot.tree.command(name="viewblacklist")
-@app_commands.describe()
-async def viewblacklist(interaction: discord.Interaction):
-    channel = interaction.channel
-    channelId = channel.id
-    blacklisted = db[interaction.guild.id]["channels"][channelId]["blacklist"]
-    message = ""
-    for userId in blacklisted:
-        message += "    - " + blacklisted[userId]["name"] + "\n"
-    embed=discord.Embed(title=f"Blacklisted Users in {interaction.channel.name}:", description=message, color=0x007063)
-    embed.set_author(name="Blacklist")
-    embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
-    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 '''
 
