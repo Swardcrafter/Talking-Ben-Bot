@@ -257,7 +257,7 @@ async def viewlists(interaction: discord.Interaction):
     embed=discord.Embed(title=f"Whitelisted Users in {interaction.channel.name}:", description=message, color=0x007063)
     embed.set_author(name="Whitelist")
     embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.user.send(embed=embed)
     channel = interaction.channel
     channelId = channel.id
     blacklisted = db[interaction.guild.id]["channels"][channelId]["blacklist"]
@@ -267,7 +267,8 @@ async def viewlists(interaction: discord.Interaction):
     embed=discord.Embed(title=f"Blacklisted Users in {interaction.channel.name}:", description=message, color=0x007063)
     embed.set_author(name="Blacklist")
     embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.user.send(embed=embed)
+    await interaction.response.send_message("Sent the information is dms.", ephemeral=True)
 
 
 
