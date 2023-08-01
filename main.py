@@ -118,7 +118,7 @@ async def whitelistoff(interaction: discord.Interaction,):
         embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
         await interaction.response.send_message(embed=embed, ephemeral=True)
     else:
-        if(db[interaction.guild.id]["channels"][channelId]["whiteliston"] == False):
+        if(db[interaction.guild.id]["channels"][channelId]["whiteliston"] == True):
             if(interaction.user.id in db[interaction.guild.id]["channels"][channelId]["whitelisted"]):
                 db[interaction.guild.id]["channels"][channelId]["whiteliston"] = False
                 embed=discord.Embed(title=f"Turned the whitelist off.", color=0x007063)
