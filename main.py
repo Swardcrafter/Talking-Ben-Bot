@@ -76,16 +76,69 @@ async def on_guild_channel_delete(channel):
 @bot.tree.command(name="whiteliston")
 @app_commands.describe()
 async def whiteliston(interaction: discord.Interaction,):
-    print(f"Whitelist on triggered with this interaction: \n{interaction}")
-    await interaction.response.send_message(f"Whitelist on triggered with this interaction: \n{interaction}", ephemeral=True)
+    channel = interaction.channel
+    channelId = channel.id
+
+    if(db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
+        embed=discord.Embed(title=f"No users whitelisted, use /addwhitelist", color=0x007063)
+        embed.set_author(name="Whitelist")
+        embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    else:
+        if(db[interaction.guild.id]["channels"][channelId]["whiteliston"] == False):
+            if(interaction.user.id in db[interaction.guild.id]["channels"][channelId]["whitelisted"]):
+                db[interaction.guild.id]["channels"][channelId]["whiteliston"] = True
+                embed=discord.Embed(title=f"Turned the whitelist on.", color=0x007063)
+                embed.set_author(name="Whitelist")
+                embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                embed=discord.Embed(title=f"You must be whitelisted to run this command.", color=0x007063)
+                embed.set_author(name="Whitelist")
+                embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+            embed=discord.Embed(title=f"Whitelist already on.", color=0x007063)
+            embed.set_author(name="Whitelist")
+            embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
     Save(db)
 
 @bot.tree.command(name="whitelistoff")
 @app_commands.describe()
 async def whitelistoff(interaction: discord.Interaction,):
-    print(f"Whitelist off triggered with this interaction: \n{interaction}")
-    await interaction.response.send_message(f"Whitelist off triggered with this interaction: \n{interaction}", ephemeral=True)
+    channel = interaction.channel
+    channelId = channel.id
+
+    if(db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
+        embed=discord.Embed(title=f"No users whitelisted, use /addwhitelist", color=0x007063)
+        embed.set_author(name="Whitelist")
+        embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    else:
+        if(db[interaction.guild.id]["channels"][channelId]["whiteliston"] == False):
+            if(interaction.user.id in db[interaction.guild.id]["channels"][channelId]["whitelisted"]):
+                db[interaction.guild.id]["channels"][channelId]["whiteliston"] = False
+                embed=discord.Embed(title=f"Turned the whitelist off.", color=0x007063)
+                embed.set_author(name="Whitelist")
+                embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                embed=discord.Embed(title=f"You must be whitelisted to run this command.", color=0x007063)
+                embed.set_author(name="Whitelist")
+                embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+            embed=discord.Embed(title=f"Whitelist already off.", color=0x007063)
+            embed.set_author(name="Whitelist")
+            embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+
     Save(db)
+
+
 
 @bot.tree.command(name="addwhitelist")
 @app_commands.describe(user="The user you want to add to the whitelist")
@@ -101,7 +154,7 @@ async def addwhitelist(interaction: discord.Interaction, user: discord.Member):
                 "name": user.name,
                 "id": user.id
             }
-            embed=discord.Embed(title=f"NO USERS | Added {user.name} to whitelist", color=0x007063)
+            embed=discord.Embed(title=f"Added {user.name} to whitelist", color=0x007063)
             embed.set_author(name="Whitelist")
             embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -116,7 +169,7 @@ async def addwhitelist(interaction: discord.Interaction, user: discord.Member):
                 "name": user.name,
                 "id": user.id
             }
-            embed=discord.Embed(title=f"USERS EXIST | Added {user.name} to whitelist", color=0x007063)
+            embed=discord.Embed(title=f"Added {user.name} to whitelist", color=0x007063)
             embed.set_author(name="Whitelist")
             embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -171,8 +224,6 @@ async def removewhitelist(interaction: discord.Interaction, user: discord.Member
             embed.set_author(name="Whitelist")
             embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
             await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
 
     Save(db)
 
