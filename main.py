@@ -179,8 +179,16 @@ async def removewhitelist(interaction: discord.Interaction, user: discord.Member
 @bot.tree.command(name="viewwhitelist")
 @app_commands.describe()
 async def viewwhitelist(interaction: discord.Interaction):
-    print(f"Viewwhitelist triggered with this interaction: \n{interaction}")
-    await interaction.response.send_message(f"Viewwhitelist triggered with this interaction: \n{interaction}", ephemeral=True)
+    channel = interaction.channel
+    channelId = channel.id
+    whitelisted = db[interaction.guild.id]["channels"][channelId]["whitelisted"]
+    message = ""
+    for userId in whitelisted:
+        message += "    - " + whitelisted[userId]["name"] + "\n"
+    embed=discord.Embed(title=f"Whitelisted Users in {interaction.channel.name}:", description=message, color=0x007063)
+    embed.set_author(name="Whitelist")
+    embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 '''
