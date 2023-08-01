@@ -68,7 +68,22 @@ async def on_guild_channel_delete(channel):
 
     Save(db)
 
-
+@bot.event
+async def on_message(message):
+    # Ignore messages from the bot itself to avoid potential infinite loops
+    if message.author == bot.user:
+        return
+    
+    channel = message.channel
+    channelId = channel.id
+    
+    if(db[message.guild.id]["channels"][channelId]["whiteliston"] == True):
+        if(message.author.id in db[message.guild.id]["channels"][channelId]["whitelisted"]):
+            await message.delete()
+            embed=discord.Embed(title=f"You are not whitelisted in this channel.", color=0x007063)
+            embed.set_author(name="Whitelist")
+            embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+            await message.author.send(embed=embed)
 
 ### Commands:
 
