@@ -87,6 +87,12 @@ async def on_message(message):
             embed.set_author(name="Whitelist")
             embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
             await message.author.send(embed=embed)
+    if(message.author.id in db[message.guild.id]["channels"][channelId]["blacklist"]):
+        await message.delete()
+        embed=discord.Embed(title=f"You are blacklisted in this channel.", color=0x007063)
+        embed.set_author(name="Blacklist")
+        embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
+        await message.author.send(embed=embed)
 
 ### Commands:
 
