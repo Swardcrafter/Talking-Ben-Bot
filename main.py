@@ -31,7 +31,7 @@ async def on_guild_join(guild):
         db[guild.id]["channels"][channel.id] = {
             "name": channel.name,
             "id": channel.id,
-            "whitelisted": [],
+            "whitelisted": {},
             "whiteliston": False
         }
 
@@ -55,7 +55,7 @@ async def on_guild_channel_create(channel):
     db[channel.guild.id]["channels"][channel.id] = {
         "name": channel.name,
         "id": channel.id,
-        "whitelisted": [],
+        "whitelisted": {},
         "whiteliston": False
     }
 
@@ -92,10 +92,12 @@ async def whitelistoff(interaction: discord.Interaction,):
 async def addwhitelist(interaction: discord.Interaction, user: discord.Member):
     channel = interaction.channel
     channelId = channel.id
+	
 
-    if(db[interaction.guild.id][channelId]["whitelisted"] == [] or db[interaction.guild.id][channelId][whiteliston] == False):
+
+    if(db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {} or db[interaction.guild.id]["channels"][channelId]["whiteliston"] == False):
         if(interaction.user.guild_permissions.administrator):
-            db[interaction.guild.id][channelId]["whitelisted"][user.id] = {
+            db[interaction.guild.id]["channels"][channelId]["whitelisted"][user.id] = {
                 "name": user.name,
                 "id": user.id
             }
@@ -109,8 +111,8 @@ async def addwhitelist(interaction: discord.Interaction, user: discord.Member):
             embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
             await interaction.response.send_message(embed=embed, ephemeral=True)
     else:
-        if(interaction.user.id in db[interaction.guild.id][channelId]["whitelisted"]):
-            db[interaction.guild.id][channelId]["whitelisted"][user.id] = {
+        if(interaction.user.id in db[interaction.guild.id]["channels"][channelId]["whitelisted"]):
+            db[interaction.guild.id]["channels"][channelId]["whitelisted"][user.id] = {
                 "name": user.name,
                 "id": user.id
             }
@@ -133,10 +135,10 @@ async def removewhitelist(interaction: discord.Interaction, user: discord.Member
     channel = interaction.channel
     channelId = channel.id
 
-    if(db[interaction.guild.id][channelId]["whitelisted"] == [] or db[interaction.guild.id][channelId][whiteliston] == False):
+    if(db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {} or db[interaction.guild.id]["channels"][channelId]["whiteliston"] == False):
         if(interaction.user.guild_permissions.administrator):
-            if(user.id in db[interaction.guild.id][channelId]["whitelisted"]):
-                db[interaction.guild.id][channelId]["whitelisted"].remove(user.id)
+            if(user.id in db[interaction.guild.id]["channels"][channelId]["whitelisted"]):
+                db[interaction.guild.id]["channels"][channelId]["whitelisted"].remove(user.id)
                 embed=discord.Embed(title=f"Removed {user.name} from whitelist", color=0x007063)
                 embed.set_author(name="Whitelist")
                 embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
@@ -152,9 +154,9 @@ async def removewhitelist(interaction: discord.Interaction, user: discord.Member
             embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
             await interaction.response.send_message(embed=embed, ephemeral=True)
     else:
-        if(interaction.user.id in db[interaction.guild.id][channelId]["whitelisted"]):
-            if(user.id in db[interaction.guild.id][channelId]["whitelisted"]):
-                db[interaction.guild.id][channelId]["whitelisted"].remove(user.id)
+        if(interaction.user.id in db[interaction.guild.id]["channels"][channelId]["whitelisted"]):
+            if(user.id in db[interaction.guild.id]["channels"][channelId]["whitelisted"]):
+                db[interaction.guild.id]["channels"][channelId]["whitelisted"].remove(user.id)
                 embed=discord.Embed(title=f"Removed {user.name} from whitelist", color=0x007063)
                 embed.set_author(name="Whitelist")
                 embed.set_footer(text="- Whitelist Bot (Made by PlotTwist)")
