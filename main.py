@@ -106,10 +106,11 @@ async def fuckyou(interaction: discord.Interaction, user: discord.User):
 
     if interaction.user.id in user_data_fuckyou["cooldowns"]:
         user_info = user_data_fuckyou["cooldowns"][interaction.user.id]
-        if(user_info["time"] != 0):
+        print(user_info)
+        if(user_info["time"] == 0):
             continueVar = True
         else:
-            interaction.response.send_message(f"You are still on cooldown for {user_info['time']} seconds.")
+            await interaction.response.send_message(f"You are still on cooldown for {user_info['time']} seconds.")
     else:
         continueVar = True
         user_data_fuckyou["cooldowns"][interaction.user.id] = {
@@ -123,23 +124,25 @@ async def fuckyou(interaction: discord.Interaction, user: discord.User):
         if user.id in user_data_fuckyou["mutes"]:
             user_info = user_data_fuckyou["mutes"][user.id]
             if(user_info["time"] != 0):
-                interaction.response.send_message(f"User is already fuckyou'd. Wait {user_info['time']} seconds.")
+                await interaction.response.send_message(f"User is already fuckyou'd. Wait {user_info['time']} seconds.")
                 continueVar = False
             else:
-                interaction.response.send_message(f"You have fuckyou'd {user.name}.")
+                await interaction.response.send_message(f"You have fuckyou'd {user.name}.")
                 user_data_fuckyou["cooldowns"][interaction.user.id]["time"] = 60
                 user_data_fuckyou["mutes"][user.id]["time"] = 60
-                user.send(f"You have been fuckyou'd by {interaction.user.name}")
+                await user.move_to(None)
+                await user.send(f"You have been fuckyou'd by {interaction.user.name}")
         else:
-            interaction.response.send_message(f"You have fuckyou'd {user.name}.")
+            await interaction.response.send_message(f"You have fuckyou'd {user.name}.")
             user_data_fuckyou["cooldowns"][interaction.user.id]["time"] = 60
+            await user.move_to(None)
             user_data_fuckyou["mutes"][user.id] = {
                 "name": user.name,
                 "id": user.id,
                 "time": 0
             }
             user_data_fuckyou["mutes"][user.id]["time"] = 60
-            user.send(f"You have been fuckyou'd by {interaction.user.name}")
+            await user.send(f"You have been fuckyou'd by {interaction.user.name}")
             
 
     if(continueVar == True):
@@ -147,14 +150,14 @@ async def fuckyou(interaction: discord.Interaction, user: discord.User):
         
         while(user_data_fuckyou["mutes"][user.id]["time"] != 0):
             user_data_fuckyou["mutes"][user.id]["time"] -= 1
-            save(user_data_fuckyou)
+            print(user_data_fuckyou)
             await asyncio.sleep(1)
 
         while(user_data_fuckyou["cooldowns"][interaction.user.id]["time"] != 0):
             user_data_fuckyou["cooldowns"][interaction.user.id]["time"] -= 1
-            save(user_data_fuckyou)
+            print(user_data_fuckyou)
             await asyncio.sleep(1)
-    
+
 
     save(user_data_fuckyou)
     
