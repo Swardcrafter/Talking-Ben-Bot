@@ -3,12 +3,37 @@ from discord import app_commands
 from discord.ext import commands
 import os
 from keep_alive import keep_alive
-from db import Save
-from data import db
 import asyncio
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-bot = commands.Bot(command_prefix="$", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix="^_-", intents=discord.Intents.all())
 
+email = os.environ['email']
+password = os.environ['password']
+
+CARRIERS = {
+    "att": "@mms.att.net",
+    "tmobile": "@tmomail.net",
+    "verizon": "@vtext.com",
+    "sprint": "@messaging.sprintpcs.com"
+}
+
+user_data = [
+    
+]
+
+user_data_fuckyou = {
+	
+}
+
+def remove_items(test_list, item):
+ 
+    # using list comprehension to perform the task
+    res = [i for i in test_list if i != item]
+ 
+    return res
 
 @bot.event
 async def on_ready():
@@ -19,649 +44,150 @@ async def on_ready():
     except Exception as e:
         print(e)
 
-
 @bot.event
-async def on_guild_join(guild):
-    db[guild.id] = {"name": guild.name, "id": guild.id, "channels": {}}
-    for channel in guild.channels:
-        db[guild.id]["channels"][channel.id] = {
-            "name": channel.name,
-            "id": channel.id,
-            "whitelisted": {},
-            "blacklist": {},
-            "whiteliston": False
-        }
-
-    Save(db)
-
-
-@bot.event
-async def on_guild_channel_update(before, channel):
-    if before.name != channel.name:
-        db[channel.guild.id]["channels"][channel.id]["name"] = channel.name
-
-    Save(db)
-
-
-@bot.event
-async def on_guild_remove(guild):
-    del db[guild.id]
-
-    Save(db)
-
-
-@bot.event
-async def on_guild_channel_create(channel):
-    db[channel.guild.id]["channels"][channel.id] = {
-        "name": channel.name,
-        "id": channel.id,
-        "whitelisted": {},
-        "blacklist": {},
-        "whiteliston": False
-    }
-
-    Save(db)
-
-
-@bot.event
-async def on_guild_channel_delete(channel):
-    del db[channel.guild.id]["channels"][channel.id]
-
-    Save(db)
-
+async def on_voice_state_update(member, before, after):
+    # Check if the member is the target user
+    global user_data
+    if member.id in user_data:
+        if after.channel:  # Member joined a voice channel
+            await member.move_to(None)
+    if(user_data_fuckyou[member.id]['time'] != 0):
+        await member.move_to(None)
 
 @bot.event
 async def on_message(message):
-    # Ignore messages from the bot itself to avoid potential infinite loops
-    if message.author == bot.user:
-        return
+	if(user_data_fuckyou[message.author.id]['time'] != 0):
+		await message.delete()
+	
 
-    channel = message.channel
-    channelId = channel.id
-
-    if (db[message.guild.id]["channels"][channelId]["whiteliston"] == True):
-        print(message.author.id in db[message.guild.id]["channels"][channelId]
-              ["whitelisted"])
-        if (message.author.id not in db[message.guild.id]["channels"]
-            [channelId]["whitelisted"]):
-            await message.delete()
-            embed = discord.Embed(
-                title=f"You are not whitelisted in this channel.",
-                color=0x007063)
-            embed.set_author(name="Whitelist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await message.author.send(embed=embed)
-    if (message.author.id
-            in db[message.guild.id]["channels"][channelId]["blacklist"]):
-        await message.delete()
-        embed = discord.Embed(title=f"You are blacklisted in this channel.",
-                              color=0x007063)
-        embed.set_author(name="Blacklist")
-        embed.set_footer(text="- Whitelists & Blacklists (made by PlotTwist)")
-        await message.author.send(embed=embed)
-
-
-### Commands:
-
-
-@bot.tree.command(name="help")
-@app_commands.describe()
-async def help(interaction: discord.Interaction):
-    embed = discord.Embed(title="Whitelists & Blacklists Commands:")
-    embed.add_field(
-        name="General Commands:",
-        value=
-        "1. /viewlists | Sees who is in the whitelist and blacklist.\n2. /help | Shows this message.",
-        inline=False)
-    embed.add_field(
-        name="Whitelist Commands:",
-        value=
-        "1. /whiteliston | Turns on the whitelist in the channel used so that only whitelisted users can type in there. Only works if the whitelist is off. Only works if there is at least 1 person whitelisted. Can only be used by whitelisted users.\n2. /whitelistoff | Turns off the whitelist in the channel used so that anyone can type in there. Only works if the whitelist is on. Can only be used by whitelisted users.\n3. /addwhitelist [user] | Adds a user to the whitelist. If the whitelist is off and no users whitelisted, any admin can use it (may instead use a whitelist role). If whitelist is on or there are users whitelisted, can only be used by whitelisted users.\n4. /removewhitelist [user] | Removes a user from the whitelist. If there are users whitelisted they are the only people who can use this. If not, can't be used. If it makes there be no whitelisted users, it also turns off the whitelist.",
-        inline=False)
-    embed.add_field(
-        name="Blacklist Commands:",
-        value=
-        "1. /addblacklist [user] | Adds a user to the blacklist. Can only be used by admins if there arent any whitelisted users, if there are, can only be used by them.\n2. /removeblacklist [user] | Removes a user from the blacklist. Can only be used by admins if there aren't any whitelisted users, if there are, can only be used by them.\n3. /tempblacklist [user] [time] | Temporarily blacklists a user for the provided time. d for days, h for hours, m for minutes, and s for seconds. Also follows the same rules as add and remove from blacklist on who can use it. Example: /tempblacklist @bob 10m 30s",
-        inline=False)
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
-@bot.tree.command(name="whiteliston")
-@app_commands.describe()
-async def whiteliston(interaction: discord.Interaction):
-    channel = interaction.channel
-    channelId = channel.id
-
-    if (db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
-        embed = discord.Embed(title=f"No users whitelisted, use /addwhitelist",
-                              color=0x007063)
-        embed.set_author(name="Whitelist")
-        embed.set_footer(text="- Whitelists & Blacklists (made by PlotTwist)")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+@bot.tree.command(name="addtovcblock")
+@app_commands.describe(user="User.")
+async def addtovcblock(interaction: discord.Interaction, user: discord.User):
+    global user_data
+    if interaction.user.guild_permissions.administrator:
+        user_data.append(user.id)
+        await interaction.response.send_message(f"Added {user.display_name} to the vc block.", ephemeral=True)
+        await user.move_to(None)
     else:
-        if (db[interaction.guild.id]["channels"][channelId]["whiteliston"] ==
-                False):
-            if (interaction.user.id in db[interaction.guild.id]["channels"]
-                [channelId]["whitelisted"]):
-                db[interaction.guild.
-                   id]["channels"][channelId]["whiteliston"] = True
-                embed = discord.Embed(title=f"Turned the whitelist on.",
-                                      color=0x007063)
-                embed.set_author(name="Whitelist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-            else:
-                embed = discord.Embed(
-                    title=f"You must be whitelisted to run this command.",
-                    color=0x007063)
-                embed.set_author(name="Whitelist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-        else:
-            embed = discord.Embed(title=f"Whitelist already on.",
-                                  color=0x007063)
-            embed.set_author(name="Whitelist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
+        await interaction.response.send_message(
+            f"You don't have the perms to do this.", ephemeral=True)
+'''
+@bot.tree.command(name="fuckyou")
+@app_commands.describe(user="User.")
+async def fuckyou(interaction: discord.Interaction, user: discord.User):
+    global user_data
+    global user_data_fuckyou
 
-    Save(db)
+    
+    
 
-
-@bot.tree.command(name="whitelistoff")
-@app_commands.describe()
-async def whitelistoff(interaction: discord.Interaction, ):
-    channel = interaction.channel
-    channelId = channel.id
-
-    if (db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
-        embed = discord.Embed(title=f"No users whitelisted, use /addwhitelist",
-                              color=0x007063)
-        embed.set_author(name="Whitelist")
-        embed.set_footer(text="- Whitelists & Blacklists (made by PlotTwist)")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+    if interaction.user.id in user_data_fuckyou.keys():
+        user_data_fuckyou[interaction.user.id]["used"] = True
     else:
-        if (db[interaction.guild.id]["channels"][channelId]["whiteliston"] ==
-                True):
-            if (interaction.user.id in db[interaction.guild.id]["channels"]
-                [channelId]["whitelisted"]):
-                db[interaction.guild.
-                   id]["channels"][channelId]["whiteliston"] = False
-                embed = discord.Embed(title=f"Turned the whitelist off.",
-                                      color=0x007063)
-                embed.set_author(name="Whitelist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-            else:
-                embed = discord.Embed(
-                    title=f"You must be whitelisted to run this command.",
-                    color=0x007063)
-                embed.set_author(name="Whitelist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-        else:
-            embed = discord.Embed(title=f"Whitelist already off.",
-                                  color=0x007063)
-            embed.set_author(name="Whitelist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-
-    Save(db)
-
-
-@bot.tree.command(name="addwhitelist")
-@app_commands.describe(user="The user you want to add to the whitelist")
-async def addwhitelist(interaction: discord.Interaction, user: discord.Member):
-    channel = interaction.channel
-    channelId = channel.id
-
-    if (db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
-        if (interaction.user.guild_permissions.administrator):
-            db[interaction.guild.id]["channels"][channelId]["whitelisted"][
-                user.id] = {
-                    "name": user.name,
-                    "id": user.id
-                }
-            embed = discord.Embed(title=f"Added {user.name} to whitelist",
-                                  color=0x007063)
-            embed.set_author(name="Whitelist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-        else:
-            embed = discord.Embed(
-                title=
-                f"You don't have the necissary permissions to run this. (Must have Administrator.)",
-                color=0x007063)
-            embed.set_author(name="Whitelist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
+        user_data_fuckyou[interaction.user.id] = {
+            "time": 0,
+            "used": True
+		}
+	
+    if user.id in user_data_fuckyou.keys():
+        if(user_data_fuckyou[interaction.user.id]["used"] == False):
+	        user_data_fuckyou[user.id]["time"] = 60
     else:
-        if (interaction.user.id in db[interaction.guild.id]["channels"]
-            [channelId]["whitelisted"]):
-            db[interaction.guild.id]["channels"][channelId]["whitelisted"][
-                user.id] = {
-                    "name": user.name,
-                    "id": user.id
-                }
-            embed = discord.Embed(title=f"Added {user.name} to whitelist",
-                                  color=0x007063)
-            embed.set_author(name="Whitelist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-        else:
-            embed = discord.Embed(
-                title=
-                f"You must be whitelisted to run this command while users are whitelisted.",
-                color=0x007063)
-            embed.set_author(name="Whitelist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
+        if(user_data_fuckyou[interaction.user.id]["used"] == False):
+	        user_data_fuckyou[user.id] = {
+	            "time": 60,
+	            "used": False
+			}
 
-    Save(db)
+    if(user_data_fuckyou[interaction.user.id]["used"] == False):
+        await user.move_to(None)
+        await user.send(f"You have been fuckyou'd by {interaction.user}.")
+        await interaction.response.send_message(f"You have fuckyou'd {user.name}.", ephemeral=True)
 
 
-@bot.tree.command(name="removewhitelist")
-@app_commands.describe(user="The user you want to remove from the whitelist")
-async def removewhitelist(interaction: discord.Interaction,
-                          user: discord.Member):
-    channel = interaction.channel
-    channelId = channel.id
+	
+    while(user_data_fuckyou[user.id]["time"] != 0):
+        user_data_fuckyou[user.id]["time"] -= 1
+        print(f"{user.id} is fucked for: {user_data_fuckyou[user.id]['time']}")
+        await asyncio.sleep(1)
 
-    if (db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
-        if (interaction.user.guild_permissions.administrator):
-            if (user.id in db[interaction.guild.id]["channels"][channelId]
-                ["whitelisted"]):
-                del db[interaction.guild.
-                       id]["channels"][channelId]["whitelisted"][user.id]
-                embed = discord.Embed(
-                    title=f"Removed {user.name} from whitelist",
-                    color=0x007063)
-                embed.set_author(name="Whitelist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-            else:
-                embed = discord.Embed(
-                    title=f"{user.name} isn't whitelisted here",
-                    color=0x007063)
-                embed.set_author(name="Whitelist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-        else:
-            embed = discord.Embed(
-                title=
-                f"You don't have the necissary permissions to run this. (Must have Administrator.)",
-                color=0x007063)
-            embed.set_author(name="Whitelist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-    else:
-        if (interaction.user.id in db[interaction.guild.id]["channels"]
-            [channelId]["whitelisted"]):
-            if (user.id in db[interaction.guild.id]["channels"][channelId]
-                ["whitelisted"]):
-                del db[interaction.guild.
-                       id]["channels"][channelId]["whitelisted"][user.id]
-                embed = discord.Embed(
-                    title=f"Removed {user.name} from whitelist",
-                    color=0x007063)
-                embed.set_author(name="Whitelist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-            else:
-                embed = discord.Embed(
-                    title=f"{user.name} isn't whitelisted here",
-                    color=0x007063)
-                embed.set_author(name="Whitelist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-        else:
-            embed = discord.Embed(
-                title=
-                f"You must be whitelisted to run this command while users are whitelisted.",
-                color=0x007063)
-            embed.set_author(name="Whitelist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-
-    Save(db)
-
-
-@bot.tree.command(name="viewlists")
-@app_commands.describe()
-async def viewlists(interaction: discord.Interaction):
-    channel = interaction.channel
-    channelId = channel.id
-    whitelisted = db[
-        interaction.guild.id]["channels"][channelId]["whitelisted"]
-    message = ""
-    for userId in whitelisted:
-        message += "    - " + whitelisted[userId]["name"] + "\n"
-    embed = discord.Embed(
-        title=f"Whitelisted Users in {interaction.channel.name}:",
-        description=message,
-        color=0x007063)
-    embed.set_author(name="Whitelist")
-    embed.set_footer(text="- Whitelists & Blacklists (made by PlotTwist)")
-    await interaction.user.send(embed=embed)
-    channel = interaction.channel
-    channelId = channel.id
-    blacklisted = db[interaction.guild.id]["channels"][channelId]["blacklist"]
-    message = ""
-    for userId in blacklisted:
-        message += "    - " + blacklisted[userId]["name"] + "\n"
-    embed = discord.Embed(
-        title=f"Blacklisted Users in {interaction.channel.name}:",
-        description=message,
-        color=0x007063)
-    embed.set_author(name="Blacklist")
-    embed.set_footer(text="- Whitelists & Blacklists (made by PlotTwist)")
-    await interaction.user.send(embed=embed)
-    await interaction.response.send_message("Sent the information is dms.",
-                                            ephemeral=True)
-
-
-@bot.tree.command(name="addblacklist")
-@app_commands.describe(user="The user you want to add to the blacklist")
-async def addblacklist(interaction: discord.Interaction, user: discord.Member):
-    channel = interaction.channel
-    channelId = channel.id
-
-    if (db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
-        if (interaction.user.guild_permissions.administrator):
-            db[interaction.guild.id]["channels"][channelId]["blacklist"][
-                user.id] = {
-                    "name": user.name,
-                    "id": user.id
-                }
-            embed = discord.Embed(title=f"Added {user.name} to blacklist",
-                                  color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-        else:
-            embed = discord.Embed(
-                title=
-                f"You don't have the necissary permissions to run this. (Must have Administrator.)",
-                color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-    else:
-        if (interaction.user.id in db[interaction.guild.id]["channels"]
-            [channelId]["whitelisted"]):
-            db[interaction.guild.id]["channels"][channelId]["blacklist"][
-                user.id] = {
-                    "name": user.name,
-                    "id": user.id
-                }
-            embed = discord.Embed(title=f"Added {user.name} to blacklist",
-                                  color=0x007063)
-            embed.set_author(name="blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-        else:
-            embed = discord.Embed(
-                title=
-                f"You must be whitelisted to run this command while users are whitelisted.",
-                color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-
-    Save(db)
-
-
-def convert_time_to_seconds(time_str):
-    time_units = {"d": 86400, "h": 3600, "m": 60, "s": 1}
-    total_seconds = 0
-    current_number = ''
-
-    for char in time_str:
-        if char.isdigit():
-            current_number += char
-        elif char in time_units:
-            total_seconds += int(current_number) * time_units[char]
-            current_number = ''
-
-    # Add any remaining number (if time_str ends with a number without a unit)
-    if current_number:
-        total_seconds += int(current_number)
-
-    return total_seconds
-
-
-@bot.tree.command(name="tempblacklist")
-@app_commands.describe(user="The user you want to add to the blacklist",
-                       time="The time you want them blacklisted for. d for days, h for hours, m for minutes, and s for seconds.")
-async def tempblacklist(interaction: discord.Interaction, user: discord.Member,
-                        time: str):
-    channel = interaction.channel
-    channelId = channel.id
-    tempmute = convert_time_to_seconds(time)
-
-    if (db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
-        if (interaction.user.guild_permissions.administrator):
-            db[interaction.guild.id]["channels"][channelId]["blacklist"][
-                user.id] = {
-                    "name": user.name,
-                    "id": user.id
-                }
-            embed = discord.Embed(
-                title=f"Added {user.name} to blacklist for {time}.",
-                color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-            Save(db)
-            print(tempmute)
-            await asyncio.sleep(tempmute)
-            print("Finished")
-            del db[interaction.guild.id]["channels"][channelId]["blacklist"][
-                user.id]
-            embed = discord.Embed(title=f"Removed {user.name} from blacklist",
-                                  color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.user.send(embed=embed)
-        else:
-            embed = discord.Embed(
-                title=
-                f"You don't have the necissary permissions to run this. (Must have Administrator.)",
-                color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-    else:
-        if (interaction.user.id in db[interaction.guild.id]["channels"]
-            [channelId]["whitelisted"]):
-            db[interaction.guild.id]["channels"][channelId]["blacklist"][
-                user.id] = {
-                    "name": user.name,
-                    "id": user.id
-                }
-            embed = discord.Embed(
-                title=f"Added {user.name} to blacklist for {time}.",
-                color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-            Save(db)
-            print(tempmute)
-            await asyncio.sleep(tempmute)
-            print("Finished")
-            del db[interaction.guild.id]["channels"][channelId]["blacklist"][
-                user.id]
-            embed = discord.Embed(title=f"Removed {user.name} from blacklist",
-                                  color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.user.send(embed=embed)
-        else:
-            embed = discord.Embed(
-                title=
-                f"You must be whitelisted to run this command while users are whitelisted.",
-                color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-
-    Save(db)
-
-
-@bot.tree.command(name="removeblacklist")
-@app_commands.describe(user="The user you want to remove from the blacklist")
-async def removeblacklist(interaction: discord.Interaction,
-                          user: discord.Member):
-    channel = interaction.channel
-    channelId = channel.id
-
-    if (db[interaction.guild.id]["channels"][channelId]["whitelisted"] == {}):
-        if (interaction.user.guild_permissions.administrator):
-            if (user.id in db[interaction.guild.id]["channels"][channelId]
-                ["blacklist"]):
-                del db[interaction.guild.
-                       id]["channels"][channelId]["blacklist"][user.id]
-                embed = discord.Embed(
-                    title=f"Removed {user.name} from blacklist",
-                    color=0x007063)
-                embed.set_author(name="Blacklist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-            else:
-                embed = discord.Embed(
-                    title=f"{user.name} isn't blacklisted here",
-                    color=0x007063)
-                embed.set_author(name="Blacklist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-        else:
-            embed = discord.Embed(
-                title=
-                f"You don't have the necissary permissions to run this. (Must have Administrator.)",
-                color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-    else:
-        if (interaction.user.id in db[interaction.guild.id]["channels"]
-            [channelId]["whitelisted"]):
-            if (user.id in db[interaction.guild.id]["channels"][channelId]
-                ["blacklist"]):
-                del db[interaction.guild.
-                       id]["channels"][channelId]["blacklist"][user.id]
-                embed = discord.Embed(
-                    title=f"Removed {user.name} from blacklist",
-                    color=0x007063)
-                embed.set_author(name="Blacklist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-            else:
-                embed = discord.Embed(
-                    title=f"{user.name} isn't blacklisted here",
-                    color=0x007063)
-                embed.set_author(name="Blacklist")
-                embed.set_footer(
-                    text="- Whitelists & Blacklists (made by PlotTwist)")
-                await interaction.response.send_message(embed=embed,
-                                                        ephemeral=True)
-        else:
-            embed = discord.Embed(
-                title=
-                f"You must be whitelisted to run this command while users are whitelisted.",
-                color=0x007063)
-            embed.set_author(name="Blacklist")
-            embed.set_footer(
-                text="- Whitelists & Blacklists (made by PlotTwist)")
-            await interaction.response.send_message(embed=embed,
-                                                    ephemeral=True)
-
-    Save(db)
-
-
+	
+    await asyncio.sleep(120)
+	# 3540 seconds for hour minus 1 minute
+    user_data_fuckyou[interaction.user.id]["used"] = False
 '''
 
-Example Command:
+@bot.tree.command(name="sendmessage", description="Send an email/text message to someone.")
+@app_commands.describe(type="Type of message you want to send. Email or phone (keep lowercase).", toadress="Adress/phone number.", provider="Provider of the phone number, if you want to just email, feel free to leave this as just a space or a random set of text.", towhoname="To who you want to send it to, (name). Leave empty if you are sending sms.", fromwhoname="From who you want them to see it was, the email will be the same but this will be the display name. Leave empty if you are sending sms.", subject="Subject of the email. Only use if email.", message="The message you want to send.")
+async def sendmessage(interaction: discord.Interaction, type: str, toadress: str, provider: str, towhoname: str, fromwhoname: str, subject: str, message: str):
+    if(type == "email"):
+        message1 = MIMEMultipart()
+        fromaddr = ""
+        toaddrs = toadress
+        message1["To"] = towhoname
+        message1["From"] = fromaddr
+        message1["Subject"] = subject
+        messageText = MIMEText(message,'html')
+        message1.attach(messageText)
+        server.sendmail(fromaddr,toaddrs,message1.as_string())
+        await interaction.response.send_message("Sent", ephemeral=True)
+    elif(type == "phone"):
+        message1 = MIMEMultipart()
+        fromaddr = ""
+        toaddrs = toadress + CARRIERS[provider]
+        message1["To"] = ""
+        message1["From"] = fromaddr
+        message1["Subject"] = ""
+        messageText = MIMEText(message,'html')
+        message1.attach(messageText)
+        server.sendmail(fromaddr,toaddrs,message1.as_string())
+        await interaction.response.send_message("Sent", ephemeral=True)
+    else:
+        await interaction.response.send_message("Wrong input, its email or phone, nothing else.", ephemeral=True)
 
 
-@bot.tree.command(name="setinfo")
-@app_commands.describe(id="Id for this info", message="The message")
-async def setInfo(interaction: discord.Interaction, id: int, message: str):
+@bot.tree.command(name="removefromvcblock")
+@app_commands.describe(user="User.")
+async def removefromvcblock(interaction: discord.Interaction, user: discord.User):
+    global user_data
     if interaction.user.guild_permissions.administrator:
-        if (id not in db.keys()):
-            db[id] = message
-            await interaction.response.send_message(
-                f"You have set the /info with the id of {id} to {message}",
-                ephemeral=True)
-            Save(db)
-        else:
-            await interaction.response.send_message(
-                f"This is already an info, to edit it, do /editInfo",
-                ephemeral=True)
+        user_data = remove_items(user_data, user.id)
+        await interaction.response.send_message(f"Removed {user.display_name} from the vc block.", ephemeral=True)
+    else:
+        await interaction.response.send_message(
+            f"You don't have the perms to do this.", ephemeral=True)
+
+@bot.tree.command(name="addeveryonetovcblock")
+@app_commands.describe()
+async def addeveryonetovcblock(interaction: discord.Interaction):
+    global user_data
+    if interaction.user.guild_permissions.administrator:
+        guild = interaction.guild
+        users = [member for member in guild.members]
+        for user in users:
+            await user.move_to(None)
+            user_data.append(user.id)
+        await interaction.response.send_message(f"Added everyone to the vc block.", ephemeral=True)
+    else:
+        await interaction.response.send_message(
+            f"You don't have the perms to do this.", ephemeral=True)
+
+@bot.tree.command(name="clearvcblock")
+@app_commands.describe()
+async def clearvcblock(interaction: discord.Interaction):
+    global user_data
+    if interaction.user.guild_permissions.administrator:
+        user_data = []
+        await interaction.response.send_message(f"Cleared the vc block.", ephemeral=True)
     else:
         await interaction.response.send_message(
             f"You don't have the perms to do this.", ephemeral=True)
 
 
-
-'''
+server = smtplib.SMTP('smtp.gmail.com:587')
+server.ehlo('Gmail')
+server.starttls()
+server.login(email,password)
 
 keep_alive()
 bot.run(os.environ['TOKEN'])
