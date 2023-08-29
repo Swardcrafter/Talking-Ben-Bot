@@ -7,6 +7,8 @@ import asyncio
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from data import user_data_fuckyou
+from db import save
 
 bot = commands.Bot(command_prefix="^_-", intents=discord.Intents.all())
 
@@ -23,10 +25,6 @@ CARRIERS = {
 user_data = [
     
 ]
-
-user_data_fuckyou = {
-	
-}
 
 def remove_items(test_list, item):
  
@@ -51,13 +49,14 @@ async def on_voice_state_update(member, before, after):
     if member.id in user_data:
         if after.channel:  # Member joined a voice channel
             await member.move_to(None)
-    if(user_data_fuckyou[member.id]['time'] != 0):
-        await member.move_to(None)
-
+    if(member.id in user_data_fuckyou["mutes"]):
+        if(user_data_fuckyou["mutes"][member.id]['time'] != 0):
+            await member.move_to(None)
 @bot.event
 async def on_message(message):
-	if(user_data_fuckyou[message.author.id]['time'] != 0):
-		await message.delete()
+    if(message.author.id in user_data_fuckyou["mutes"]):
+        if(user_data_fuckyou["mutes"][message.author.id]['time'] != 0):
+            await message.delete()
 	
 
 @bot.tree.command(name="addtovcblock")
@@ -71,51 +70,94 @@ async def addtovcblock(interaction: discord.Interaction, user: discord.User):
     else:
         await interaction.response.send_message(
             f"You don't have the perms to do this.", ephemeral=True)
-'''
+        
+
+
 @bot.tree.command(name="fuckyou")
 @app_commands.describe(user="User.")
 async def fuckyou(interaction: discord.Interaction, user: discord.User):
     global user_data
     global user_data_fuckyou
 
-    
-    
+    '''
+    user_data_fuckyou tree:
 
-    if interaction.user.id in user_data_fuckyou.keys():
-        user_data_fuckyou[interaction.user.id]["used"] = True
+    {
+        "mutes": {
+            "USERID1": {
+                "name": "Bob",
+                "id": USERID1,
+                "time": 50
+            }
+        },
+        "cooldowns": {
+            "USERID2": {
+                "name": "Bob",
+                "time": 110,
+                "id": USERID2
+            }
+        }
+    }
+
+    
+    '''
+
+    continueVar = False
+
+    if interaction.user.id in user_data_fuckyou["cooldowns"]:
+        user_info = user_data_fuckyou["cooldowns"][interaction.user.id]
+        if(user_info["time"] != 0):
+            continueVar = True
+        else:
+            interaction.response.send_message(f"You are still on cooldown for {user_info['time']} seconds.")
     else:
-        user_data_fuckyou[interaction.user.id] = {
+        continueVar = True
+        user_data_fuckyou["cooldowns"][interaction.user.id] = {
             "time": 0,
-            "used": True
-		}
-	
-    if user.id in user_data_fuckyou.keys():
-        if(user_data_fuckyou[interaction.user.id]["used"] == False):
-	        user_data_fuckyou[user.id]["time"] = 60
-    else:
-        if(user_data_fuckyou[interaction.user.id]["used"] == False):
-	        user_data_fuckyou[user.id] = {
-	            "time": 60,
-	            "used": False
-			}
-
-    if(user_data_fuckyou[interaction.user.id]["used"] == False):
-        await user.move_to(None)
-        await user.send(f"You have been fuckyou'd by {interaction.user}.")
-        await interaction.response.send_message(f"You have fuckyou'd {user.name}.", ephemeral=True)
+            "name": interaction.user.name,
+            "id": interaction.user.id
+        }
 
 
-	
-    while(user_data_fuckyou[user.id]["time"] != 0):
-        user_data_fuckyou[user.id]["time"] -= 1
-        print(f"{user.id} is fucked for: {user_data_fuckyou[user.id]['time']}")
-        await asyncio.sleep(1)
+    if(continueVar == True):
+        if user.id in user_data_fuckyou["mutes"]:
+            user_info = user_data_fuckyou["mutes"][user.id]
+            if(user_info["time"] != 0):
+                interaction.response.send_message(f"User is already fuckyou'd. Wait {user_info['time']} seconds.")
+                continueVar = False
+            else:
+                interaction.response.send_message(f"You have fuckyou'd {user.name}.")
+                user_data_fuckyou["cooldowns"][interaction.user.id]["time"] = 60
+                user_data_fuckyou["mutes"][user.id]["time"] = 60
+                user.send(f"You have been fuckyou'd by {interaction.user.name}")
+        else:
+            interaction.response.send_message(f"You have fuckyou'd {user.name}.")
+            user_data_fuckyou["cooldowns"][interaction.user.id]["time"] = 60
+            user_data_fuckyou["mutes"][user.id] = {
+                "name": user.name,
+                "id": user.id,
+                "time": 0
+            }
+            user_data_fuckyou["mutes"][user.id]["time"] = 60
+            user.send(f"You have been fuckyou'd by {interaction.user.name}")
+            
 
-	
-    await asyncio.sleep(120)
-	# 3540 seconds for hour minus 1 minute
-    user_data_fuckyou[interaction.user.id]["used"] = False
-'''
+    if(continueVar == True):
+        save(user_data_fuckyou)
+        
+        while(user_data_fuckyou["mutes"][user.id]["time"] != 0):
+            user_data_fuckyou["mutes"][user.id]["time"] -= 1
+            save(user_data_fuckyou)
+            await asyncio.sleep(1)
+
+        while(user_data_fuckyou["cooldowns"][interaction.user.id]["time"] != 0):
+            user_data_fuckyou["cooldowns"][interaction.user.id]["time"] -= 1
+            save(user_data_fuckyou)
+            await asyncio.sleep(1)
+    
+
+    save(user_data_fuckyou)
+    
 
 @bot.tree.command(name="sendmessage", description="Send an email/text message to someone.")
 @app_commands.describe(type="Type of message you want to send. Email or phone (keep lowercase).", toadress="Adress/phone number.", provider="Provider of the phone number, if you want to just email, feel free to leave this as just a space or a random set of text.", towhoname="To who you want to send it to, (name). Leave empty if you are sending sms.", fromwhoname="From who you want them to see it was, the email will be the same but this will be the display name. Leave empty if you are sending sms.", subject="Subject of the email. Only use if email.", message="The message you want to send.")
@@ -144,6 +186,8 @@ async def sendmessage(interaction: discord.Interaction, type: str, toadress: str
         await interaction.response.send_message("Sent", ephemeral=True)
     else:
         await interaction.response.send_message("Wrong input, its email or phone, nothing else.", ephemeral=True)
+
+
 
 
 @bot.tree.command(name="removefromvcblock")
