@@ -1,1 +1,0 @@
-user_data_fuckyou = {'mutes': {1145056583039074314: {'name': 'notrealpianoman', 'id': 1145056583039074314, 'time': 0}, 689556810142974050: {'name': 'realpianoman', 'id': 689556810142974050, 'time': 60}}, 'cooldowns': {689556810142974050: {'time': 60, 'name': 'realpianoman', 'id': 689556810142974050}}}
